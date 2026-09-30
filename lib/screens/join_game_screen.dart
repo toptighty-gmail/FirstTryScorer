@@ -7,7 +7,14 @@ import 'draw_confirmation_screen.dart';
 const _playerNamePrefKey = 'player_name';
 
 class JoinGameScreen extends StatefulWidget {
-  const JoinGameScreen({super.key});
+  final String? initialJoinCode;
+  final String? initialName;
+
+  const JoinGameScreen({
+    super.key,
+    this.initialJoinCode,
+    this.initialName,
+  });
 
   @override
   State<JoinGameScreen> createState() => _JoinGameScreenState();
@@ -23,9 +30,13 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
   @override
   void initState() {
     super.initState();
+    _codeController.text = widget.initialJoinCode ?? '';
+    _nameController.text = widget.initialName ?? '';
     SharedPreferences.getInstance().then((prefs) {
       final savedName = prefs.getString(_playerNamePrefKey);
-      if (savedName != null && mounted) _nameController.text = savedName;
+      if (widget.initialName == null && savedName != null && mounted) {
+        _nameController.text = savedName;
+      }
     });
   }
 

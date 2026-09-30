@@ -19,7 +19,7 @@ void main() {
   testWidgets('App builds without throwing', (WidgetTester tester) async {
     await tester.pumpWidget(const FirstTryScorerApp());
     expect(find.byType(FirstTryScorerApp), findsOneWidget);
-    expect(find.text('Version 1.0.5  |  Build 6'), findsOneWidget);
+    expect(find.text('Version 1.0.6  |  Build 7'), findsOneWidget);
   });
 
   testWidgets('Allocation summary shows the slot and payment details', (
@@ -54,5 +54,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Continue to game board'), findsOneWidget);
+    expect(find.text('Choose another ticket allocation'), findsOneWidget);
+    expect(find.text('Exit to home'), findsOneWidget);
   });
 }

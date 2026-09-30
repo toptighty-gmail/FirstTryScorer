@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../models/game.dart';
 import '../models/pick.dart';
 import 'game_board_screen.dart';
+import 'home_screen.dart';
+import 'join_game_screen.dart';
 
 class DrawConfirmationScreen extends StatelessWidget {
   final Game game;
@@ -135,6 +137,30 @@ class DrawConfirmationScreen extends StatelessWidget {
                         ),
                         icon: const Icon(Icons.arrow_forward),
                         label: const Text('Continue to game board'),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: () => Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) => JoinGameScreen(
+                              initialJoinCode: game.joinCode,
+                              initialName: playerName,
+                            ),
+                          ),
+                        ),
+                        icon: const Icon(Icons.confirmation_number_outlined),
+                        label: const Text('Choose another ticket allocation'),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (_) => const HomeScreen(),
+                          ),
+                          (route) => false,
+                        ),
+                        icon: const Icon(Icons.exit_to_app),
+                        label: const Text('Exit to home'),
                       ),
                     ],
                   ),
