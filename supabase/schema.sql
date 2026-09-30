@@ -48,9 +48,14 @@ create table if not exists games (
   home_team_id uuid not null references teams(id),
   away_team_id uuid not null references teams(id),
   join_code text not null unique,
+  ticket_price numeric(8, 2) not null default 0 check (ticket_price >= 0),
   status text not null default 'open' check (status in ('open', 'closed', 'complete')),
   created_at timestamptz not null default now()
 );
+
+alter table public.games
+  add column if not exists ticket_price numeric(8, 2) not null default 0
+  check (ticket_price >= 0);
 
 create table if not exists picks (
   id uuid primary key default gen_random_uuid(),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/game_service.dart';
+import '../widgets/ticket_payment_agreement_dialog.dart';
 import 'draw_confirmation_screen.dart';
 
 const _playerNamePrefKey = 'player_name';
@@ -10,11 +11,7 @@ class JoinGameScreen extends StatefulWidget {
   final String? initialJoinCode;
   final String? initialName;
 
-  const JoinGameScreen({
-    super.key,
-    this.initialJoinCode,
-    this.initialName,
-  });
+  const JoinGameScreen({super.key, this.initialJoinCode, this.initialName});
 
   @override
   State<JoinGameScreen> createState() => _JoinGameScreenState();
@@ -62,10 +59,19 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
 
     try {
       final game = await _gameService.getGameByJoinCode(code);
+      if (!mounted) return;
       if (game == null) {
         setState(() => _error = "No game found for code '$code'.");
         return;
       }
+
+      final agreed = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) =>
+            TicketPaymentAgreementDialog(ticketPrice: game.ticketPrice),
+      );
+      if (agreed != true || !mounted) return;
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_playerNamePrefKey, name);
@@ -87,6 +93,7 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
         ),
       );
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = 'Something went wrong: $e');
     } finally {
       if (mounted) setState(() => _drawing = false);

@@ -7,6 +7,7 @@ import 'package:first_try_scorer/models/game.dart';
 import 'package:first_try_scorer/models/pick.dart';
 import 'package:first_try_scorer/screens/draw_confirmation_screen.dart';
 import 'package:first_try_scorer/screens/home_screen.dart';
+import 'package:first_try_scorer/widgets/ticket_payment_agreement_dialog.dart';
 
 void main() {
   test('Supabase config reads the environment values supplied at runtime', () {
@@ -20,7 +21,7 @@ void main() {
   testWidgets('App builds without throwing', (WidgetTester tester) async {
     await tester.pumpWidget(const FirstTryScorerApp());
     expect(find.byType(FirstTryScorerApp), findsOneWidget);
-    expect(find.text('Version 1.0.10  |  Build 11'), findsOneWidget);
+    expect(find.text('Version 1.0.11  |  Build 12'), findsOneWidget);
   });
 
   testWidgets('History is hidden from signed-out users', (
@@ -44,6 +45,7 @@ void main() {
       awayTeamName: 'Away Team',
       joinCode: 'ABC123',
       status: 'open',
+      ticketPrice: 5.5,
     );
 
     await tester.pumpWidget(
@@ -66,5 +68,30 @@ void main() {
     expect(find.text('Continue to game board'), findsOneWidget);
     expect(find.text('Choose another ticket allocation'), findsOneWidget);
     expect(find.text('Exit to home'), findsOneWidget);
+  });
+
+  testWidgets('Payment agreement requires acceptance before drawing', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: TicketPaymentAgreementDialog(ticketPrice: 5.5)),
+    );
+
+    expect(
+      find.text('I agree to pay £5.50 for my ticket allocation.'),
+      findsOneWidget,
+    );
+    var agreeButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Agree and draw'),
+    );
+    expect(agreeButton.onPressed, isNull);
+
+    await tester.tap(find.byType(CheckboxListTile));
+    await tester.pump();
+
+    agreeButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Agree and draw'),
+    );
+    expect(agreeButton.onPressed, isNotNull);
   });
 }

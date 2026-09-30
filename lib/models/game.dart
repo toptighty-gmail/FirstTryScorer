@@ -7,6 +7,7 @@ class Game {
   final String awayTeamName;
   final String joinCode;
   final String status;
+  final double ticketPrice;
 
   const Game({
     required this.id,
@@ -17,6 +18,7 @@ class Game {
     required this.awayTeamName,
     required this.joinCode,
     required this.status,
+    required this.ticketPrice,
   });
 
   // Expects a row selected with the home/away team names embedded, e.g.
@@ -31,6 +33,7 @@ class Game {
       awayTeamName: (map['away'] as Map<String, dynamic>)['name'] as String,
       joinCode: map['join_code'] as String,
       status: (map['status'] ?? 'open') as String,
+      ticketPrice: ((map['ticket_price'] ?? 0) as num).toDouble(),
     );
   }
 }

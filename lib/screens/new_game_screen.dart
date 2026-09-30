@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../models/team.dart';
@@ -16,14 +17,21 @@ class NewGameScreen extends StatefulWidget {
 
 class _NewGameScreenState extends State<NewGameScreen> {
   final GameService _gameService = GameService();
+  final TextEditingController _ticketPriceController = TextEditingController();
   DateTime _matchDate = DateTime.now();
   Team? _homeTeam;
   Team? _awayTeam;
   bool _creating = false;
   String? _error;
 
+  double? get _ticketPrice => double.tryParse(_ticketPriceController.text);
+
   bool get _canCreate =>
-      _homeTeam != null && _awayTeam != null && _homeTeam!.id != _awayTeam!.id;
+      _homeTeam != null &&
+      _awayTeam != null &&
+      _homeTeam!.id != _awayTeam!.id &&
+      _ticketPrice != null &&
+      _ticketPrice! >= 0;
 
   String? get _teamSelectionMessage {
     if (_homeTeam == null || _awayTeam == null) {
@@ -36,7 +44,16 @@ class _NewGameScreenState extends State<NewGameScreen> {
     if (_homeTeam!.id == _awayTeam!.id) {
       return 'Home and away teams must be different.';
     }
+    if (_ticketPrice == null || _ticketPrice! < 0) {
+      return 'Enter a valid ticket price of £0 or more.';
+    }
     return null;
+  }
+
+  @override
+  void dispose() {
+    _ticketPriceController.dispose();
+    super.dispose();
   }
 
   @override
@@ -103,6 +120,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
         matchDate: _matchDate,
         homeTeam: _homeTeam!,
         awayTeam: _awayTeam!,
+        ticketPrice: _ticketPrice!,
       );
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
@@ -136,6 +154,24 @@ class _NewGameScreenState extends State<NewGameScreen> {
                   subtitle: Text(DateFormat.yMMMEd().format(_matchDate)),
                   trailing: const Icon(Icons.calendar_today),
                   onTap: _pickDate,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _ticketPriceController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r'^\d*\.?\d{0,2}'),
+                    ),
+                  ],
+                  onChanged: (_) => setState(() => _error = null),
+                  decoration: const InputDecoration(
+                    labelText: 'Ticket price',
+                    prefixText: '£ ',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TeamDropdown(
