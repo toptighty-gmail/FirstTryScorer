@@ -50,6 +50,7 @@ class GameService {
           homeTeamName: homeTeam.name,
           awayTeamName: awayTeam.name,
           joinCode: row['join_code'] as String,
+          status: 'open',
         );
       } on PostgrestException catch (e) {
         if (e.code == '23505') continue; // join code collision, retry

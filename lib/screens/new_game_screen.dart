@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/team.dart';
+import '../services/auth_service.dart';
 import '../services/game_service.dart';
 import '../widgets/team_dropdown.dart';
 import 'game_board_screen.dart';
@@ -23,6 +24,34 @@ class _NewGameScreenState extends State<NewGameScreen> {
 
   bool get _canCreate => _homeTeam != null && _awayTeam != null && _homeTeam!.id != _awayTeam!.id;
 
+  @override
+  void initState() {
+    super.initState();
+    _ensureAdminAccess();
+  }
+
+  Future<void> _ensureAdminAccess() async {
+    final user = AuthService.currentUser;
+    if (user == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Admin sign in required to create games.')),
+      );
+      Navigator.of(context).pop();
+      return;
+    }
+
+    final isAdmin = await AuthService.isCurrentUserAdmin();
+    if (!mounted) return;
+
+    if (!isAdmin) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Only admins can create games.')),
+      );
+      Navigator.of(context).pop();
+    }
+  }
+
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -35,6 +64,19 @@ class _NewGameScreenState extends State<NewGameScreen> {
 
   Future<void> _create() async {
     if (!_canCreate) return;
+
+    final user = AuthService.currentUser;
+    if (user == null) {
+      setState(() => _error = 'Admin sign in required.');
+      return;
+    }
+
+    final isAdmin = await AuthService.isCurrentUserAdmin();
+    if (!isAdmin) {
+      setState(() => _error = 'Only admins can create games.');
+      return;
+    }
+
     setState(() {
       _creating = true;
       _error = null;

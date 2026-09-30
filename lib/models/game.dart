@@ -6,6 +6,7 @@ class Game {
   final String homeTeamName;
   final String awayTeamName;
   final String joinCode;
+  final String status;
 
   const Game({
     required this.id,
@@ -15,6 +16,7 @@ class Game {
     required this.homeTeamName,
     required this.awayTeamName,
     required this.joinCode,
+    required this.status,
   });
 
   // Expects a row selected with the home/away team names embedded, e.g.
@@ -28,6 +30,7 @@ class Game {
       homeTeamName: (map['home'] as Map<String, dynamic>)['name'] as String,
       awayTeamName: (map['away'] as Map<String, dynamic>)['name'] as String,
       joinCode: map['join_code'] as String,
+      status: (map['status'] ?? 'open') as String,
     );
   }
 }
