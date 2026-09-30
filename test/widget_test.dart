@@ -20,7 +20,7 @@ void main() {
   testWidgets('App builds without throwing', (WidgetTester tester) async {
     await tester.pumpWidget(const FirstTryScorerApp());
     expect(find.byType(FirstTryScorerApp), findsOneWidget);
-    expect(find.text('Version 1.0.7  |  Build 8'), findsOneWidget);
+    expect(find.text('Version 1.0.8  |  Build 9'), findsOneWidget);
   });
 
   testWidgets('History is hidden from signed-out users', (

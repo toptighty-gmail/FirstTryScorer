@@ -65,7 +65,7 @@ class _AppVersionFooterState extends State<_AppVersionFooter> {
             builder: (context, snapshot) {
               final label = snapshot.hasData
                   ? 'Version ${snapshot.data!.version}  |  Build ${snapshot.data!.buildNumber}'
-                  : 'Version 1.0.7  |  Build 8';
+                  : 'Version 1.0.8  |  Build 9';
               return Center(
                 child: Text(
                   label,

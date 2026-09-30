@@ -193,8 +193,9 @@ drop policy if exists "teams are readable by anyone" on teams;
 create policy "teams are readable by anyone" on teams
   for select using (true);
 drop policy if exists "anyone can add a team" on teams;
-create policy "anyone can add a team" on teams
-  for insert with check (true);
+drop policy if exists "admins can add teams" on teams;
+create policy "admins can add teams" on teams
+  for insert to authenticated with check (public.is_admin());
 
 drop policy if exists "games are readable by anyone" on games;
 create policy "games are readable by anyone" on games

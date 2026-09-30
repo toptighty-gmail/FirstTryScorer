@@ -71,12 +71,20 @@ class _TeamDropdownState extends State<TeamDropdown> {
                     ListTile(
                       leading: const Icon(Icons.add),
                       title: Text("Add '$query'"),
+                          enabled: !_adding,
                       onTap: () async {
                         setState(() => _adding = true);
                         try {
                           final team = await _teamService.addTeam(query);
                           if (!mounted) return;
                           onSelected(team);
+                            } catch (error) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Could not add team: $error'),
+                                ),
+                              );
                         } finally {
                           if (mounted) setState(() => _adding = false);
                         }
