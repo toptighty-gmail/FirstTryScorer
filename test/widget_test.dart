@@ -22,7 +22,7 @@ void main() {
   testWidgets('App builds without throwing', (WidgetTester tester) async {
     await tester.pumpWidget(const FirstTryScorerApp());
     expect(find.byType(FirstTryScorerApp), findsOneWidget);
-    expect(find.text('Version 1.0.14  |  Build 15'), findsOneWidget);
+    expect(find.text('Version 1.0.15  |  Build 16'), findsOneWidget);
   });
 
   test('Responsive app widths suit common device classes', () {
@@ -71,6 +71,10 @@ void main() {
     expect(find.text('Home Team #7'), findsOneWidget);
     expect(
       find.text('Mr J Dobson\nSort Code: 77-09-23\nAccount No: 27186560'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Payment reference: Your Name and First Try Scorer.'),
       findsOneWidget,
     );
     expect(find.text('Continue to game board'), findsOneWidget);

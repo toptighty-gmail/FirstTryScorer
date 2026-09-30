@@ -121,7 +121,7 @@ class DrawConfirmationScreen extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                'Use $playerName and $teamName #$number as the payment reference.',
+                                'Payment reference: Your Name and First Try Scorer.',
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ],
