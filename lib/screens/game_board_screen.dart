@@ -331,8 +331,29 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
         return FutureBuilder<_BoardAccess>(
           future: _accessFuture,
           builder: (context, accessSnapshot) {
+            if (accessSnapshot.hasError) {
+              return Scaffold(
+                appBar: AppBar(title: const Text('Game Board')),
+                body: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: SelectableText(
+                      'Could not verify board access. Check that the profiles table and its read policy are set up in Supabase.\n\n${accessSnapshot.error}',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              );
+            }
+            if (!accessSnapshot.hasData) {
+              return Scaffold(
+                appBar: AppBar(title: Text('Game Board')),
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
             final access =
-                accessSnapshot.data ?? const _BoardAccess(isAdmin: false);
+                accessSnapshot.data!;
             return Scaffold(
               appBar: AppBar(
                 title: const Text('Game Board'),
@@ -357,7 +378,22 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
               body: StreamBuilder<List<Pick>>(
                 stream: _picksStream,
                 builder: (context, picksSnapshot) {
-                  final picks = picksSnapshot.data ?? const <Pick>[];
+                  if (picksSnapshot.hasError) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: SelectableText(
+                          'Could not load allocated tickets. Check the picks table SELECT policy and Realtime setup in Supabase.\n\n${picksSnapshot.error}',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    );
+                  }
+                  if (!picksSnapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final picks = picksSnapshot.data!;
                   _latestPicks = picks;
                   final drawnCount = picks.length;
                   final slotsTotal = 30;
@@ -431,9 +467,7 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                               if (AuthService.currentUser != null) ...[
                                 const SizedBox(height: 12),
                                 Text(
-                                  accessSnapshot.hasError
-                                      ? 'Admin access could not be verified. Check the Supabase profile permissions.'
-                                      : 'This signed-in account is not marked as an admin in profiles.',
+                                  'This account is signed in but is not marked as an admin. In Supabase, set profiles.is_admin to true for this user, then sign out and back in.',
                                   style: TextStyle(
                                     color: Theme.of(context).colorScheme.error,
                                   ),

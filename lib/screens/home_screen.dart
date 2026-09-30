@@ -82,77 +82,101 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('First Try Scorer')),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 360),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.sports_rugby, size: 72),
-                const SizedBox(height: 8),
-                Text(
-                  'First Try Scorer',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 24),
-                if (user == null) ...[
-                  const Text('Admin sign in required to create games.'),
-                  const SizedBox(height: 20),
-                  FilledButton.icon(
-                    icon: const Icon(Icons.lock_open),
-                    label: const Text('Admin Sign In'),
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const AdminSignInScreen(),
+      body: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 360),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(
+                        'Assets/PlymstockOaksLogo.png',
+                        width: 144,
+                        height: 144,
+                        fit: BoxFit.contain,
+                        semanticLabel: 'Plymstock Oaks RFC logo',
                       ),
-                    ),
-                  ),
-                ] else if (!_isAdmin) ...[
-                  Text('Signed in as ${user.email ?? 'admin'}'),
-                  const SizedBox(height: 8),
-                  const Text('Admin access is required to create games.'),
-                  const SizedBox(height: 20),
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Sign out'),
-                    onPressed: _signOut,
-                  ),
-                ] else ...[
-                  Text('Signed in as ${user.email ?? 'admin'}'),
-                  const SizedBox(height: 20),
-                  FilledButton.icon(
-                    icon: const Icon(Icons.add),
-                    label: const Text('New Game'),
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const NewGameScreen()),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Sign out'),
-                    onPressed: _signOut,
-                  ),
-                ],
-                const SizedBox(height: 12),
-                FilledButton.icon(
-                  icon: const Icon(Icons.login),
-                  label: const Text('Join Game'),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const JoinGameScreen()),
+                      const SizedBox(height: 12),
+                      Text(
+                        'First Try Scorer',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Developed by Sean Cook',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 24),
+                      if (user == null) ...[
+                        const Text('Admin sign in required to create games.'),
+                        const SizedBox(height: 20),
+                        FilledButton.icon(
+                          icon: const Icon(Icons.lock_open),
+                          label: const Text('Admin Sign In'),
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const AdminSignInScreen(),
+                            ),
+                          ),
+                        ),
+                      ] else if (!_isAdmin) ...[
+                        Text('Signed in as ${user.email ?? 'admin'}'),
+                        const SizedBox(height: 8),
+                        const Text('Admin access is required to create games.'),
+                        const SizedBox(height: 20),
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.logout),
+                          label: const Text('Sign out'),
+                          onPressed: _signOut,
+                        ),
+                      ] else ...[
+                        Text('Signed in as ${user.email ?? 'admin'}'),
+                        const SizedBox(height: 20),
+                        FilledButton.icon(
+                          icon: const Icon(Icons.add),
+                          label: const Text('New Game'),
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const NewGameScreen(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.logout),
+                          label: const Text('Sign out'),
+                          onPressed: _signOut,
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      FilledButton.icon(
+                        icon: const Icon(Icons.login),
+                        label: const Text('Join Game'),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const JoinGameScreen(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.history),
+                        label: const Text('History'),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const HistoryScreen(),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.history),
-                  label: const Text('History'),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const HistoryScreen()),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
