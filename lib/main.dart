@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/supabase_config.dart';
 import 'screens/home_screen.dart';
+import 'widgets/responsive_app_frame.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,11 +28,9 @@ class FirstTryScorerApp extends StatelessWidget {
         colorSchemeSeed: const Color(0xFF1B5E20),
         useMaterial3: true,
       ),
-      builder: (context, child) => Column(
-        children: [
-          Expanded(child: child ?? const SizedBox.shrink()),
-          const _AppVersionFooter(),
-        ],
+      builder: (context, child) => ResponsiveAppFrame(
+        footer: const _AppVersionFooter(),
+        child: child ?? const SizedBox.shrink(),
       ),
       home: SupabaseConfig.isConfigured
           ? const HomeScreen()
@@ -65,7 +64,7 @@ class _AppVersionFooterState extends State<_AppVersionFooter> {
             builder: (context, snapshot) {
               final label = snapshot.hasData
                   ? 'Version ${snapshot.data!.version}  |  Build ${snapshot.data!.buildNumber}'
-                  : 'Version 1.0.13  |  Build 14';
+                  : 'Version 1.0.14  |  Build 15';
               return Center(
                 child: Text(
                   label,

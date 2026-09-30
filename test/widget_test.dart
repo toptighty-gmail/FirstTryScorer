@@ -7,6 +7,7 @@ import 'package:first_try_scorer/models/game.dart';
 import 'package:first_try_scorer/models/pick.dart';
 import 'package:first_try_scorer/screens/draw_confirmation_screen.dart';
 import 'package:first_try_scorer/screens/home_screen.dart';
+import 'package:first_try_scorer/widgets/responsive_app_frame.dart';
 import 'package:first_try_scorer/widgets/ticket_payment_agreement_dialog.dart';
 
 void main() {
@@ -21,7 +22,14 @@ void main() {
   testWidgets('App builds without throwing', (WidgetTester tester) async {
     await tester.pumpWidget(const FirstTryScorerApp());
     expect(find.byType(FirstTryScorerApp), findsOneWidget);
-    expect(find.text('Version 1.0.13  |  Build 14'), findsOneWidget);
+    expect(find.text('Version 1.0.14  |  Build 15'), findsOneWidget);
+  });
+
+  test('Responsive app widths suit common device classes', () {
+    expect(ResponsiveAppFrame.maxWidthFor(390), 390);
+    expect(ResponsiveAppFrame.maxWidthFor(768), 800);
+    expect(ResponsiveAppFrame.maxWidthFor(1366), 1120);
+    expect(ResponsiveAppFrame.maxWidthFor(2560), 1280);
   });
 
   testWidgets('History is hidden from signed-out users', (
