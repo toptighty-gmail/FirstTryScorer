@@ -28,7 +28,9 @@ class DrawConfirmationScreen extends StatelessWidget {
     if (!context.mounted) return;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Bank details copied')));
+    ).showSnackBar(
+      const SnackBar(content: Text('Bank details copied to clipboard')),
+    );
   }
 
   @override

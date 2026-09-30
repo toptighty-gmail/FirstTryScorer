@@ -19,7 +19,7 @@ void main() {
   testWidgets('App builds without throwing', (WidgetTester tester) async {
     await tester.pumpWidget(const FirstTryScorerApp());
     expect(find.byType(FirstTryScorerApp), findsOneWidget);
-    expect(find.text('Version 1.0.4  |  Build 5'), findsOneWidget);
+    expect(find.text('Version 1.0.5  |  Build 6'), findsOneWidget);
   });
 
   testWidgets('Allocation summary shows the slot and payment details', (
