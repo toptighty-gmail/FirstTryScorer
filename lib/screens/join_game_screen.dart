@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../models/pick.dart';
 import '../services/game_service.dart';
-import 'game_board_screen.dart';
+import 'draw_confirmation_screen.dart';
 
 const _playerNamePrefKey = 'player_name';
 
@@ -60,23 +59,21 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_playerNamePrefKey, name);
 
-      final result = await _gameService.drawSlot(gameId: game.id, playerName: name);
-      if (!mounted) return;
-
-      final teamLabel = result.team == PickTeam.home ? game.homeTeamName : game.awayTeamName;
-      await showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Your draw'),
-          content: Text('You are $teamLabel #${result.number}'),
-          actions: [
-            FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK')),
-          ],
-        ),
+      final result = await _gameService.drawSlot(
+        gameId: game.id,
+        playerName: name,
       );
       if (!mounted) return;
+
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => GameBoardScreen(gameId: game.id)),
+        MaterialPageRoute(
+          builder: (_) => DrawConfirmationScreen(
+            game: game,
+            playerName: name,
+            team: result.team,
+            number: result.number,
+          ),
+        ),
       );
     } catch (e) {
       setState(() => _error = 'Something went wrong: $e');
@@ -101,22 +98,37 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
                 TextField(
                   controller: _codeController,
                   textCapitalization: TextCapitalization.characters,
-                  decoration: const InputDecoration(labelText: 'Join code', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: 'Join code',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Your name', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: 'Your name',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 24),
                 if (_error != null) ...[
-                  Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  Text(
+                    _error!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
                   const SizedBox(height: 12),
                 ],
                 FilledButton(
                   onPressed: _drawing ? null : _draw,
                   child: _drawing
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : const Text('Draw'),
                 ),
               ],

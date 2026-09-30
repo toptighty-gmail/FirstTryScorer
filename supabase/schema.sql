@@ -212,3 +212,20 @@ create policy "picks are readable by anyone" on picks
 
 revoke all on function draw_slot(uuid, text) from public;
 grant execute on function draw_slot(uuid, text) to anon, authenticated;
+
+-- Enable the picks stream used by the live game board. This is safe to rerun.
+do $$
+begin
+  if exists (
+    select 1 from pg_publication where pubname = 'supabase_realtime'
+  ) and not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'picks'
+  ) then
+    execute 'alter publication supabase_realtime add table public.picks';
+  end if;
+end;
+$$;
