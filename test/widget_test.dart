@@ -6,6 +6,7 @@ import 'package:first_try_scorer/main.dart';
 import 'package:first_try_scorer/models/game.dart';
 import 'package:first_try_scorer/models/pick.dart';
 import 'package:first_try_scorer/screens/draw_confirmation_screen.dart';
+import 'package:first_try_scorer/screens/home_screen.dart';
 
 void main() {
   test('Supabase config reads the environment values supplied at runtime', () {
@@ -19,7 +20,16 @@ void main() {
   testWidgets('App builds without throwing', (WidgetTester tester) async {
     await tester.pumpWidget(const FirstTryScorerApp());
     expect(find.byType(FirstTryScorerApp), findsOneWidget);
-    expect(find.text('Version 1.0.6  |  Build 7'), findsOneWidget);
+    expect(find.text('Version 1.0.7  |  Build 8'), findsOneWidget);
+  });
+
+  testWidgets('History is hidden from signed-out users', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: HomeScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('History'), findsNothing);
   });
 
   testWidgets('Allocation summary shows the slot and payment details', (
