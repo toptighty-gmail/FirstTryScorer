@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/auth_service.dart';
@@ -19,7 +18,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   StreamSubscription<AuthState>? _authStateSubscription;
-  late final Future<PackageInfo> _packageInfoFuture;
 
   bool _loading = true;
   bool _isAdmin = false;
@@ -27,7 +25,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _packageInfoFuture = PackageInfo.fromPlatform();
     if (AuthService.isInitialized) {
       _authStateSubscription = Supabase.instance.client.auth.onAuthStateChange
           .listen((event) {
@@ -85,23 +82,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('First Try Scorer')),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: FutureBuilder<PackageInfo>(
-            future: _packageInfoFuture,
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return const SizedBox.shrink();
-              final info = snapshot.data!;
-              return Text(
-                'Version ${info.version}  |  Build ${info.buildNumber}',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.labelSmall,
-              );
-            },
-          ),
-        ),
-      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 360),

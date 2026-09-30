@@ -428,6 +428,18 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                                         ),
                                 ),
                               ),
+                              if (AuthService.currentUser != null) ...[
+                                const SizedBox(height: 12),
+                                Text(
+                                  accessSnapshot.hasError
+                                      ? 'Admin access could not be verified. Check the Supabase profile permissions.'
+                                      : 'This signed-in account is not marked as an admin in profiles.',
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
                             ],
                           ),
                         ),
