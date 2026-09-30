@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import '../models/game.dart';
 import '../models/team.dart';
 import '../services/auth_service.dart';
 import '../services/game_service.dart';
@@ -9,7 +10,9 @@ import '../widgets/team_dropdown.dart';
 import 'game_board_screen.dart';
 
 class NewGameScreen extends StatefulWidget {
-  const NewGameScreen({super.key});
+  final Game? gameToEdit;
+
+  const NewGameScreen({super.key, this.gameToEdit});
 
   @override
   State<NewGameScreen> createState() => _NewGameScreenState();
@@ -59,6 +62,13 @@ class _NewGameScreenState extends State<NewGameScreen> {
   @override
   void initState() {
     super.initState();
+    final game = widget.gameToEdit;
+    if (game != null) {
+      _matchDate = game.matchDate;
+      _homeTeam = Team(id: game.homeTeamId, name: game.homeTeamName);
+      _awayTeam = Team(id: game.awayTeamId, name: game.awayTeamName);
+      _ticketPriceController.text = game.ticketPrice.toStringAsFixed(2);
+    }
     _ensureAdminAccess();
   }
 
@@ -116,18 +126,32 @@ class _NewGameScreenState extends State<NewGameScreen> {
       _error = null;
     });
     try {
-      final game = await _gameService.createGame(
-        matchDate: _matchDate,
-        homeTeam: _homeTeam!,
-        awayTeam: _awayTeam!,
-        ticketPrice: _ticketPrice!,
-      );
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => GameBoardScreen(gameId: game.id, justCreated: true),
-        ),
-      );
+      final game = widget.gameToEdit;
+      if (game == null) {
+        final createdGame = await _gameService.createGame(
+          matchDate: _matchDate,
+          homeTeam: _homeTeam!,
+          awayTeam: _awayTeam!,
+          ticketPrice: _ticketPrice!,
+        );
+        if (!mounted) return;
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) =>
+                GameBoardScreen(gameId: createdGame.id, justCreated: true),
+          ),
+        );
+      } else {
+        await _gameService.updateGame(
+          game: game,
+          matchDate: _matchDate,
+          homeTeam: _homeTeam!,
+          awayTeam: _awayTeam!,
+          ticketPrice: _ticketPrice!,
+        );
+        if (!mounted) return;
+        Navigator.of(context).pop(true);
+      }
     } catch (e) {
       setState(() => _error = 'Could not create the game: $e');
     } finally {
@@ -138,93 +162,110 @@ class _NewGameScreenState extends State<NewGameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('New Game')),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Match date'),
-                  subtitle: Text(DateFormat.yMMMEd().format(_matchDate)),
-                  trailing: const Icon(Icons.calendar_today),
-                  onTap: _pickDate,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _ticketPriceController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
+      appBar: AppBar(
+        title: Text(widget.gameToEdit == null ? 'New Game' : 'Edit Game'),
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Match date'),
+                        subtitle: Text(DateFormat.yMMMEd().format(_matchDate)),
+                        trailing: const Icon(Icons.calendar_today),
+                        onTap: _pickDate,
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _ticketPriceController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d*\.?\d{0,2}'),
+                          ),
+                        ],
+                        onChanged: (_) => setState(() => _error = null),
+                        decoration: const InputDecoration(
+                          labelText: 'Ticket price',
+                          prefixText: '£ ',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TeamDropdown(
+                        label: 'Home team',
+                        initialTeam: _homeTeam,
+                        onSelected: (team) => setState(() {
+                          _homeTeam = team;
+                          _error = null;
+                        }),
+                        onQueryChanged: () => setState(() {
+                          _homeTeam = null;
+                          _error = null;
+                        }),
+                      ),
+                      const SizedBox(height: 16),
+                      TeamDropdown(
+                        label: 'Away team',
+                        initialTeam: _awayTeam,
+                        onSelected: (team) => setState(() {
+                          _awayTeam = team;
+                          _error = null;
+                        }),
+                        onQueryChanged: () => setState(() {
+                          _awayTeam = null;
+                          _error = null;
+                        }),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Home: ${_homeTeam?.name ?? 'not selected'}  ·  Away: ${_awayTeam?.name ?? 'not selected'}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      if (_error != null || _teamSelectionMessage != null) ...[
+                        Text(
+                          _error ?? _teamSelectionMessage!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      FilledButton(
+                        onPressed: _canCreate && !_creating ? _create : null,
+                        child: _creating
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                widget.gameToEdit == null
+                                    ? 'Create Game'
+                                    : 'Save Changes',
+                              ),
+                      ),
+                    ],
                   ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                      RegExp(r'^\d*\.?\d{0,2}'),
-                    ),
-                  ],
-                  onChanged: (_) => setState(() => _error = null),
-                  decoration: const InputDecoration(
-                    labelText: 'Ticket price',
-                    prefixText: '£ ',
-                    border: OutlineInputBorder(),
-                  ),
                 ),
-                const SizedBox(height: 16),
-                TeamDropdown(
-                  label: 'Home team',
-                  onSelected: (team) => setState(() {
-                    _homeTeam = team;
-                    _error = null;
-                  }),
-                  onQueryChanged: () => setState(() {
-                    _homeTeam = null;
-                    _error = null;
-                  }),
-                ),
-                const SizedBox(height: 16),
-                TeamDropdown(
-                  label: 'Away team',
-                  onSelected: (team) => setState(() {
-                    _awayTeam = team;
-                    _error = null;
-                  }),
-                  onQueryChanged: () => setState(() {
-                    _awayTeam = null;
-                    _error = null;
-                  }),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Home: ${_homeTeam?.name ?? 'not selected'}  ·  Away: ${_awayTeam?.name ?? 'not selected'}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                if (_error != null || _teamSelectionMessage != null) ...[
-                  Text(
-                    _error ?? _teamSelectionMessage!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                FilledButton(
-                  onPressed: _canCreate && !_creating ? _create : null,
-                  child: _creating
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Create Game'),
-                ),
-              ],
+              ),
             ),
           ),
         ),

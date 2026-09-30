@@ -209,6 +209,14 @@ drop policy if exists "anyone can create a game" on games;
 drop policy if exists "admins can create games" on games;
 create policy "admins can create games" on games
   for insert to authenticated with check (public.is_admin());
+drop policy if exists "admins can update games" on games;
+create policy "admins can update games" on games
+  for update to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+drop policy if exists "admins can delete games" on games;
+create policy "admins can delete games" on games
+  for delete to authenticated using (public.is_admin());
 
 drop policy if exists "picks are readable by anyone" on picks;
 create policy "picks are readable by anyone" on picks

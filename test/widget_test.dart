@@ -21,7 +21,7 @@ void main() {
   testWidgets('App builds without throwing', (WidgetTester tester) async {
     await tester.pumpWidget(const FirstTryScorerApp());
     expect(find.byType(FirstTryScorerApp), findsOneWidget);
-    expect(find.text('Version 1.0.11  |  Build 12'), findsOneWidget);
+    expect(find.text('Version 1.0.13  |  Build 14'), findsOneWidget);
   });
 
   testWidgets('History is hidden from signed-out users', (
@@ -93,5 +93,21 @@ void main() {
       find.widgetWithText(FilledButton, 'Agree and draw'),
     );
     expect(agreeButton.onPressed, isNotNull);
+  });
+
+  test('Game maps a database ticket price', () {
+    final game = Game.fromMap({
+      'id': 'game-id',
+      'match_date': '2026-10-01',
+      'home_team_id': 'home-id',
+      'away_team_id': 'away-id',
+      'home': {'name': 'Home Team'},
+      'away': {'name': 'Away Team'},
+      'join_code': 'ABC123',
+      'status': 'open',
+      'ticket_price': 7.5,
+    });
+
+    expect(game.ticketPrice, 7.5);
   });
 }

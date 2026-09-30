@@ -95,6 +95,28 @@ class GameService {
     return rows.map((row) => Game.fromMap(row)).toList();
   }
 
+  Future<void> updateGame({
+    required Game game,
+    required DateTime matchDate,
+    required Team homeTeam,
+    required Team awayTeam,
+    required double ticketPrice,
+  }) async {
+    await _client
+        .from('games')
+        .update({
+          'match_date': matchDate.toIso8601String().substring(0, 10),
+          'home_team_id': homeTeam.id,
+          'away_team_id': awayTeam.id,
+          'ticket_price': ticketPrice,
+        })
+        .eq('id', game.id);
+  }
+
+  Future<void> deleteGame(String gameId) async {
+    await _client.from('games').delete().eq('id', gameId);
+  }
+
   Future<DrawResult> drawSlot({
     required String gameId,
     required String playerName,
