@@ -22,7 +22,22 @@ class _NewGameScreenState extends State<NewGameScreen> {
   bool _creating = false;
   String? _error;
 
-  bool get _canCreate => _homeTeam != null && _awayTeam != null && _homeTeam!.id != _awayTeam!.id;
+  bool get _canCreate =>
+      _homeTeam != null && _awayTeam != null && _homeTeam!.id != _awayTeam!.id;
+
+  String? get _teamSelectionMessage {
+    if (_homeTeam == null || _awayTeam == null) {
+      final missing = [
+        if (_homeTeam == null) 'home',
+        if (_awayTeam == null) 'away',
+      ].join(' and ');
+      return 'Select the $missing team from the suggestions, or use Add to create it.';
+    }
+    if (_homeTeam!.id == _awayTeam!.id) {
+      return 'Home and away teams must be different.';
+    }
+    return null;
+  }
 
   @override
   void initState() {
@@ -35,7 +50,9 @@ class _NewGameScreenState extends State<NewGameScreen> {
     if (user == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Admin sign in required to create games.')),
+        const SnackBar(
+          content: Text('Admin sign in required to create games.'),
+        ),
       );
       Navigator.of(context).pop();
       return;
@@ -89,7 +106,9 @@ class _NewGameScreenState extends State<NewGameScreen> {
       );
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => GameBoardScreen(gameId: game.id, justCreated: true)),
+        MaterialPageRoute(
+          builder: (_) => GameBoardScreen(gameId: game.id, justCreated: true),
+        ),
       );
     } catch (e) {
       setState(() => _error = 'Could not create the game: $e');
@@ -119,18 +138,54 @@ class _NewGameScreenState extends State<NewGameScreen> {
                   onTap: _pickDate,
                 ),
                 const SizedBox(height: 16),
-                TeamDropdown(label: 'Home team', onSelected: (t) => setState(() => _homeTeam = t)),
+                TeamDropdown(
+                  label: 'Home team',
+                  onSelected: (team) => setState(() {
+                    _homeTeam = team;
+                    _error = null;
+                  }),
+                  onQueryChanged: () => setState(() {
+                    _homeTeam = null;
+                    _error = null;
+                  }),
+                ),
                 const SizedBox(height: 16),
-                TeamDropdown(label: 'Away team', onSelected: (t) => setState(() => _awayTeam = t)),
+                TeamDropdown(
+                  label: 'Away team',
+                  onSelected: (team) => setState(() {
+                    _awayTeam = team;
+                    _error = null;
+                  }),
+                  onQueryChanged: () => setState(() {
+                    _awayTeam = null;
+                    _error = null;
+                  }),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Home: ${_homeTeam?.name ?? 'not selected'}  ·  Away: ${_awayTeam?.name ?? 'not selected'}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 24),
-                if (_error != null) ...[
-                  Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                if (_error != null || _teamSelectionMessage != null) ...[
+                  Text(
+                    _error ?? _teamSelectionMessage!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 12),
                 ],
                 FilledButton(
                   onPressed: _canCreate && !_creating ? _create : null,
                   child: _creating
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : const Text('Create Game'),
                 ),
               ],

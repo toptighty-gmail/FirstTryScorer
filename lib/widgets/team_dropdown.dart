@@ -8,12 +8,14 @@ class TeamDropdown extends StatefulWidget {
   final String label;
   final Team? initialTeam;
   final ValueChanged<Team> onSelected;
+  final VoidCallback? onQueryChanged;
 
   const TeamDropdown({
     super.key,
     required this.label,
     required this.onSelected,
     this.initialTeam,
+    this.onQueryChanged,
   });
 
   @override
@@ -39,19 +41,28 @@ class _TeamDropdownState extends State<TeamDropdown> {
         return TextField(
           controller: controller,
           focusNode: focusNode,
+          onChanged: (_) => widget.onQueryChanged?.call(),
           decoration: InputDecoration(
             labelText: widget.label,
             border: const OutlineInputBorder(),
-            suffixIcon: _adding ? const Padding(
-              padding: EdgeInsets.all(12),
-              child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
-            ) : null,
+            suffixIcon: _adding
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : null,
           ),
         );
       },
       optionsViewBuilder: (context, onSelected, options) {
         final query = _queryText;
-        final exactMatch = options.any((o) => o.name.toLowerCase() == query.toLowerCase());
+        final exactMatch = options.any(
+          (o) => o.name.toLowerCase() == query.toLowerCase(),
+        );
         return Align(
           alignment: Alignment.topLeft,
           child: Material(
@@ -71,20 +82,20 @@ class _TeamDropdownState extends State<TeamDropdown> {
                     ListTile(
                       leading: const Icon(Icons.add),
                       title: Text("Add '$query'"),
-                          enabled: !_adding,
+                      enabled: !_adding,
                       onTap: () async {
                         setState(() => _adding = true);
                         try {
                           final team = await _teamService.addTeam(query);
                           if (!mounted) return;
                           onSelected(team);
-                            } catch (error) {
-                              if (!context.mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Could not add team: $error'),
-                                ),
-                              );
+                        } catch (error) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Could not add team: $error'),
+                            ),
+                          );
                         } finally {
                           if (mounted) setState(() => _adding = false);
                         }
@@ -98,5 +109,4 @@ class _TeamDropdownState extends State<TeamDropdown> {
       },
     );
   }
-
 }
