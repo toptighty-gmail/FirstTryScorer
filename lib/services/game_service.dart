@@ -9,6 +9,13 @@ import '../models/team.dart';
 const _gameSelect =
     '*, home:teams!home_team_id(name), away:teams!away_team_id(name)';
 
+String closedDrawMessage(String status) {
+  if (status == 'complete') {
+    return 'The draw has been fully allocated and we cannot accept your entry.';
+  }
+  return 'This draw has ended and is no longer accepting entries.';
+}
+
 class DrawResult {
   final PickTeam team;
   final int number;

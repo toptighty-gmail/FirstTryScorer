@@ -7,6 +7,7 @@ import 'package:first_try_scorer/models/game.dart';
 import 'package:first_try_scorer/models/pick.dart';
 import 'package:first_try_scorer/screens/draw_confirmation_screen.dart';
 import 'package:first_try_scorer/screens/home_screen.dart';
+import 'package:first_try_scorer/services/game_service.dart';
 import 'package:first_try_scorer/widgets/responsive_app_frame.dart';
 import 'package:first_try_scorer/widgets/ticket_payment_agreement_dialog.dart';
 
@@ -22,7 +23,7 @@ void main() {
   testWidgets('App builds without throwing', (WidgetTester tester) async {
     await tester.pumpWidget(const FirstTryScorerApp());
     expect(find.byType(FirstTryScorerApp), findsOneWidget);
-    expect(find.text('Version 1.0.15  |  Build 16'), findsOneWidget);
+    expect(find.text('Version 1.0.16  |  Build 17'), findsOneWidget);
   });
 
   test('Responsive app widths suit common device classes', () {
@@ -121,5 +122,16 @@ void main() {
     });
 
     expect(game.ticketPrice, 7.5);
+  });
+
+  test('Closed draw messages distinguish full and manually ended games', () {
+    expect(
+      closedDrawMessage('complete'),
+      'The draw has been fully allocated and we cannot accept your entry.',
+    );
+    expect(
+      closedDrawMessage('closed'),
+      'This draw has ended and is no longer accepting entries.',
+    );
   });
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/game_service.dart';
 import '../widgets/ticket_payment_agreement_dialog.dart';
@@ -22,6 +23,7 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
   final _codeController = TextEditingController();
   final _nameController = TextEditingController();
   bool _drawing = false;
+  bool _gameUnavailable = false;
   String? _error;
 
   @override
@@ -54,6 +56,7 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
 
     setState(() {
       _drawing = true;
+      _gameUnavailable = false;
       _error = null;
     });
 
@@ -62,6 +65,13 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
       if (!mounted) return;
       if (game == null) {
         setState(() => _error = "No game found for code '$code'.");
+        return;
+      }
+      if (game.status != 'open') {
+        setState(() {
+          _gameUnavailable = true;
+          _error = closedDrawMessage(game.status);
+        });
         return;
       }
 
@@ -94,6 +104,25 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
       );
     } catch (e) {
       if (!mounted) return;
+      if (e is PostgrestException &&
+          e.code == 'P0001' &&
+          e.message == 'This draw is closed') {
+        var message = 'This draw has ended and is no longer accepting entries.';
+        try {
+          final latestGame = await _gameService.getGameByJoinCode(code);
+          if (latestGame != null) {
+            message = closedDrawMessage(latestGame.status);
+          }
+        } catch (_) {
+          // Keep the safe generic ended-draw message if status refresh fails.
+        }
+        if (!mounted) return;
+        setState(() {
+          _gameUnavailable = true;
+          _error = message;
+        });
+        return;
+      }
       setState(() => _error = 'Something went wrong: $e');
     } finally {
       if (mounted) setState(() => _drawing = false);
@@ -140,7 +169,7 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
                   const SizedBox(height: 12),
                 ],
                 FilledButton(
-                  onPressed: _drawing ? null : _draw,
+                  onPressed: _drawing || _gameUnavailable ? null : _draw,
                   child: _drawing
                       ? const SizedBox(
                           width: 20,
