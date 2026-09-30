@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "rm -rf /tmp/flutter_sdk && git clone https://github.com/flutter/flutter.git --depth 1 -b stable /tmp/flutter_sdk && /tmp/flutter_sdk/bin/flutter config --enable-web && /tmp/flutter_sdk/bin/flutter pub get && /tmp/flutter_sdk/bin/flutter build web --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY",
+  "buildCommand": "bash ./vercel-build.sh",
   "outputDirectory": "build/web",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
