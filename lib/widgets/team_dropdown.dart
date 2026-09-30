@@ -27,6 +27,75 @@ class _TeamDropdownState extends State<TeamDropdown> {
   bool _adding = false;
   String _queryText = '';
 
+  Future<Team?> _saveTeam(String name, BuildContext context) async {
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty) return null;
+
+    setState(() => _adding = true);
+    try {
+      return await _teamService.addTeam(trimmedName);
+    } catch (error) {
+      if (!context.mounted) return null;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not add team: $error')));
+      return null;
+    } finally {
+      if (mounted) setState(() => _adding = false);
+    }
+  }
+
+  Future<void> _showAddTeamDialog(
+    BuildContext context,
+    TextEditingController fieldController,
+    FocusNode focusNode,
+  ) async {
+    final nameController = TextEditingController(text: _queryText);
+    final teamName = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Add a team'),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+            labelText: 'Team name',
+            border: OutlineInputBorder(),
+          ),
+          onSubmitted: (value) => Navigator.of(dialogContext).pop(value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(nameController.text),
+            child: const Text('Add team'),
+          ),
+        ],
+      ),
+    );
+    final trimmedName = teamName?.trim();
+    if (trimmedName == null ||
+        trimmedName.isEmpty ||
+        !mounted ||
+        !context.mounted) {
+      nameController.dispose();
+      return;
+    }
+
+    final team = await _saveTeam(trimmedName, context);
+    nameController.dispose();
+    if (!mounted || team == null) return;
+
+    fieldController.text = team.name;
+    focusNode.unfocus();
+    widget.onSelected(team);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Autocomplete<Team>(
@@ -45,16 +114,28 @@ class _TeamDropdownState extends State<TeamDropdown> {
           decoration: InputDecoration(
             labelText: widget.label,
             border: const OutlineInputBorder(),
-            suffixIcon: _adding
-                ? const Padding(
+            suffixIcon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_adding)
+                  const Padding(
                     padding: EdgeInsets.all(12),
                     child: SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
-                  )
-                : null,
+                  ),
+                IconButton(
+                  tooltip: 'Add new team',
+                  onPressed: _adding
+                      ? null
+                      : () =>
+                            _showAddTeamDialog(context, controller, focusNode),
+                  icon: const Icon(Icons.add_circle_outline),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -84,21 +165,8 @@ class _TeamDropdownState extends State<TeamDropdown> {
                       title: Text("Add '$query'"),
                       enabled: !_adding,
                       onTap: () async {
-                        setState(() => _adding = true);
-                        try {
-                          final team = await _teamService.addTeam(query);
-                          if (!mounted) return;
-                          onSelected(team);
-                        } catch (error) {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Could not add team: $error'),
-                            ),
-                          );
-                        } finally {
-                          if (mounted) setState(() => _adding = false);
-                        }
+                        final team = await _saveTeam(query, context);
+                        if (mounted && team != null) onSelected(team);
                       },
                     ),
                 ],
