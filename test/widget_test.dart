@@ -23,7 +23,7 @@ void main() {
   testWidgets('App builds without throwing', (WidgetTester tester) async {
     await tester.pumpWidget(const FirstTryScorerApp());
     expect(find.byType(FirstTryScorerApp), findsOneWidget);
-    expect(find.text('Version 1.0.16  |  Build 17'), findsOneWidget);
+    expect(find.text('Version 1.0.17  |  Build 18'), findsOneWidget);
   });
 
   test('Responsive app widths suit common device classes', () {
@@ -78,9 +78,59 @@ void main() {
       find.text('Payment reference: Your Name and First Try Scorer.'),
       findsOneWidget,
     );
-    expect(find.text('Continue to game board'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('Show tickets summary'), findsOneWidget);
     expect(find.text('Choose another ticket allocation'), findsOneWidget);
     expect(find.text('Exit to home'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Show tickets summary'));
+    await tester.tap(find.text('Show tickets summary'));
+    await tester.pumpAndSettle();
+    expect(find.text('Your ticket summary'), findsOneWidget);
+    expect(find.text('1 ticket for Alex Player'), findsOneWidget);
+    expect(find.text('Ticket 1: Home Team #7'), findsOneWidget);
+    expect(find.text('Total: £5.50'), findsOneWidget);
+    expect(find.text('Winnings are split 50/50.'), findsOneWidget);
+    await tester.tap(find.text('Close'));
+  });
+
+  testWidgets('Ticket summary includes earlier allocations', (
+    WidgetTester tester,
+  ) async {
+    final game = Game(
+      id: 'game-id',
+      matchDate: DateTime(2026, 10, 1),
+      homeTeamId: 'home-id',
+      awayTeamId: 'away-id',
+      homeTeamName: 'Home Team',
+      awayTeamName: 'Away Team',
+      joinCode: 'ABC123',
+      status: 'open',
+      ticketPrice: 5.5,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DrawConfirmationScreen(
+          game: game,
+          playerName: 'Alex Player',
+          team: PickTeam.home,
+          number: 7,
+          previousAllocations: const [
+            DrawResult(team: PickTeam.away, number: 12),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ticket 1: Away Team #12'), findsOneWidget);
+    expect(find.text('Ticket 2: Home Team #7'), findsOneWidget);
+    await tester.ensureVisible(find.text('Show tickets summary'));
+    await tester.tap(find.text('Show tickets summary'));
+    await tester.pumpAndSettle();
+    expect(find.text('2 tickets for Alex Player'), findsOneWidget);
+    expect(find.text('Total: £11.00'), findsOneWidget);
   });
 
   testWidgets('Payment agreement requires acceptance before drawing', (
@@ -91,7 +141,9 @@ void main() {
     );
 
     expect(
-      find.text('I agree to pay £5.50 for my ticket allocation.'),
+      find.text(
+        'I agree to pay £5.50 for my ticket allocation and confirm I understand this game has a 50/50 split on any winnings.',
+      ),
       findsOneWidget,
     );
     var agreeButton = tester.widget<FilledButton>(

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../services/game_service.dart';
+import '../services/game_service.dart'
+    show DrawResult, GameService, closedDrawMessage;
 import '../widgets/ticket_payment_agreement_dialog.dart';
 import 'draw_confirmation_screen.dart';
 
@@ -11,8 +12,14 @@ const _playerNamePrefKey = 'player_name';
 class JoinGameScreen extends StatefulWidget {
   final String? initialJoinCode;
   final String? initialName;
+  final List<DrawResult> previousAllocations;
 
-  const JoinGameScreen({super.key, this.initialJoinCode, this.initialName});
+  const JoinGameScreen({
+    super.key,
+    this.initialJoinCode,
+    this.initialName,
+    this.previousAllocations = const [],
+  });
 
   @override
   State<JoinGameScreen> createState() => _JoinGameScreenState();
@@ -99,6 +106,7 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
             playerName: name,
             team: result.team,
             number: result.number,
+            previousAllocations: widget.previousAllocations,
           ),
         ),
       );

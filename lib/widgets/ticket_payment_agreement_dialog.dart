@@ -29,7 +29,9 @@ class _TicketPaymentAgreementDialogState
         controlAffinity: ListTileControlAffinity.leading,
         value: _agreed,
         onChanged: (value) => setState(() => _agreed = value ?? false),
-        title: Text('I agree to pay $price for my ticket allocation.'),
+        title: Text(
+          'I agree to pay $price for my ticket allocation and confirm I understand this game has a 50/50 split on any winnings.',
+        ),
       ),
       actions: [
         TextButton(
