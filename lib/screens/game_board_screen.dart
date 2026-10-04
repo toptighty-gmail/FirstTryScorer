@@ -275,7 +275,7 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                         ),
                         pw.SizedBox(height: 4),
                         pw.Text(
-                          'Status: ${game.status.toUpperCase()}  |  Tickets drawn: ${picks.length}/30',
+                          'Status: ${game.status.toUpperCase()}  |  Tickets drawn: ${picks.length}/$totalGameSlots',
                         ),
                       ],
                     ),
@@ -352,8 +352,7 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
               );
             }
 
-            final access =
-                accessSnapshot.data!;
+            final access = accessSnapshot.data!;
             return Scaffold(
               appBar: AppBar(
                 title: const Text('Game Board'),
@@ -396,10 +395,10 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                   final picks = picksSnapshot.data!;
                   _latestPicks = picks;
                   final drawnCount = picks.length;
-                  final slotsTotal = 30;
+                  final slotsTotal = totalGameSlots;
 
                   if (game.status == 'open' &&
-                      drawnCount >= 30 &&
+                      drawnCount >= totalGameSlots &&
                       !_autoCloseStarted) {
                     _autoCloseStarted = true;
                     WidgetsBinding.instance.addPostFrameCallback((_) {

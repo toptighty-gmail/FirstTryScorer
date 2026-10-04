@@ -1,9 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/game.dart';
 import '../services/game_service.dart'
-    show DrawResult, GameService, closedDrawMessage;
+    show
+        DrawResult,
+        GameService,
+        closedDrawMessage,
+        drawAvailabilityMessage;
 import '../widgets/ticket_payment_agreement_dialog.dart';
 import 'draw_confirmation_screen.dart';
 
@@ -29,6 +37,12 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
   final GameService _gameService = GameService();
   final _codeController = TextEditingController();
   final _nameController = TextEditingController();
+  Timer? _lookupDebounce;
+  int _lookupRequest = 0;
+  Game? _previewGame;
+  int? _previewDrawCount;
+  bool _lookingUpGame = false;
+  String? _lookupError;
   bool _drawing = false;
   bool _gameUnavailable = false;
   String? _error;
@@ -38,6 +52,7 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
     super.initState();
     _codeController.text = widget.initialJoinCode ?? '';
     _nameController.text = widget.initialName ?? '';
+    _scheduleGameLookup(_codeController.text);
     SharedPreferences.getInstance().then((prefs) {
       final savedName = prefs.getString(_playerNamePrefKey);
       if (widget.initialName == null && savedName != null && mounted) {
@@ -48,9 +63,59 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
 
   @override
   void dispose() {
+    _lookupDebounce?.cancel();
     _codeController.dispose();
     _nameController.dispose();
     super.dispose();
+  }
+
+  void _scheduleGameLookup(String value) {
+    _lookupDebounce?.cancel();
+    final request = ++_lookupRequest;
+    final code = value.trim().toUpperCase();
+    setState(() {
+      _previewGame = null;
+      _previewDrawCount = null;
+      _lookingUpGame = code.length == 6;
+      _lookupError = null;
+      _gameUnavailable = false;
+      _error = null;
+    });
+    if (code.length != 6) return;
+
+    _lookupDebounce = Timer(
+      const Duration(milliseconds: 350),
+      () => _lookupGame(code, request),
+    );
+  }
+
+  Future<void> _lookupGame(String code, int request) async {
+    try {
+      final game = await _gameService.getGameByJoinCode(code);
+      if (!mounted || request != _lookupRequest) return;
+      if (game == null) {
+        setState(() {
+          _lookingUpGame = false;
+          _lookupError = "No game found for code '$code'.";
+        });
+        return;
+      }
+
+      final drawCount = await _gameService.getDrawCount(game.id);
+      if (!mounted || request != _lookupRequest) return;
+      setState(() {
+        _previewGame = game;
+        _previewDrawCount = drawCount;
+        _lookingUpGame = false;
+        _gameUnavailable = game.status != 'open';
+      });
+    } catch (error) {
+      if (!mounted || request != _lookupRequest) return;
+      setState(() {
+        _lookingUpGame = false;
+        _lookupError = 'Could not load game details: $error';
+      });
+    }
   }
 
   Future<void> _draw() async {
@@ -144,7 +209,7 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 360),
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -153,11 +218,51 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
                 TextField(
                   controller: _codeController,
                   textCapitalization: TextCapitalization.characters,
+                  maxLength: 6,
+                  onChanged: _scheduleGameLookup,
                   decoration: const InputDecoration(
                     labelText: 'Join code',
                     border: OutlineInputBorder(),
+                    counterText: '',
                   ),
                 ),
+                if (_lookingUpGame) ...[
+                  const SizedBox(height: 12),
+                  const Center(child: CircularProgressIndicator()),
+                ],
+                if (_lookupError != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _lookupError!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ],
+                if (_previewGame case final game?) ...[
+                  const SizedBox(height: 12),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            '${game.homeTeamName} vs ${game.awayTeamName}',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(DateFormat.yMMMMd().format(game.matchDate)),
+                          const SizedBox(height: 8),
+                          Text(
+                            drawAvailabilityMessage(_previewDrawCount ?? 0),
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 TextField(
                   controller: _nameController,

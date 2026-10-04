@@ -8,6 +8,15 @@ import '../models/team.dart';
 
 const _gameSelect =
     '*, home:teams!home_team_id(name), away:teams!away_team_id(name)';
+const totalGameSlots = 30;
+
+String drawAvailabilityMessage(int allocatedDrawCount) {
+  final available = (totalGameSlots - allocatedDrawCount).clamp(
+    0,
+    totalGameSlots,
+  );
+  return 'Draws available: $available of $totalGameSlots';
+}
 
 String closedDrawMessage(String status) {
   if (status == 'complete') {
@@ -82,6 +91,15 @@ class GameService {
         .eq('join_code', joinCode.trim().toUpperCase())
         .maybeSingle();
     return row == null ? null : Game.fromMap(row);
+  }
+
+  Future<int> getDrawCount(String gameId) async {
+    final response = await _client
+        .from('picks')
+        .select('id')
+        .eq('game_id', gameId)
+        .count(CountOption.exact);
+    return response.count;
   }
 
   Future<Game> getGameById(String gameId) async {

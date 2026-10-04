@@ -23,7 +23,7 @@ void main() {
   testWidgets('App builds without throwing', (WidgetTester tester) async {
     await tester.pumpWidget(const FirstTryScorerApp());
     expect(find.byType(FirstTryScorerApp), findsOneWidget);
-    expect(find.text('Version 1.0.17  |  Build 18'), findsOneWidget);
+    expect(find.text('Version 1.0.18  |  Build 19'), findsOneWidget);
   });
 
   test('Responsive app widths suit common device classes', () {
@@ -174,6 +174,11 @@ void main() {
     });
 
     expect(game.ticketPrice, 7.5);
+  });
+
+  test('Draw availability reports remaining allocations', () {
+    expect(drawAvailabilityMessage(5), 'Draws available: 25 of 30');
+    expect(drawAvailabilityMessage(30), 'Draws available: 0 of 30');
   });
 
   test('Closed draw messages distinguish full and manually ended games', () {
