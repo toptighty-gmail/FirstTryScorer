@@ -8,6 +8,7 @@ import 'package:first_try_scorer/models/pick.dart';
 import 'package:first_try_scorer/screens/draw_confirmation_screen.dart';
 import 'package:first_try_scorer/screens/home_screen.dart';
 import 'package:first_try_scorer/services/game_service.dart';
+import 'package:first_try_scorer/utils/game_join_link.dart';
 import 'package:first_try_scorer/widgets/responsive_app_frame.dart';
 import 'package:first_try_scorer/widgets/ticket_payment_agreement_dialog.dart';
 
@@ -23,7 +24,7 @@ void main() {
   testWidgets('App builds without throwing', (WidgetTester tester) async {
     await tester.pumpWidget(const FirstTryScorerApp());
     expect(find.byType(FirstTryScorerApp), findsOneWidget);
-    expect(find.text('Version 1.0.18  |  Build 19'), findsOneWidget);
+    expect(find.text('Version 1.0.19  |  Build 20'), findsOneWidget);
   });
 
   test('Responsive app widths suit common device classes', () {
@@ -179,6 +180,21 @@ void main() {
   test('Draw availability reports remaining allocations', () {
     expect(drawAvailabilityMessage(5), 'Draws available: 25 of 30');
     expect(drawAvailabilityMessage(30), 'Draws available: 0 of 30');
+  });
+
+  test('Game QR link uses the current site and opens with the join code', () {
+    final baseUri = Uri.parse('https://scorer.example.vercel.app/');
+    final joinUri = gameJoinUri(baseUri, 'mzpr9e');
+
+    expect(
+      joinUri.toString(),
+      'https://scorer.example.vercel.app/?joinCode=MZPR9E',
+    );
+    expect(gameJoinCodeFromUri(joinUri), 'MZPR9E');
+    expect(
+      gameJoinCodeFromUri(Uri.parse('https://example.com/?joinCode=bad')),
+      isNull,
+    );
   });
 
   test('Closed draw messages distinguish full and manually ended games', () {

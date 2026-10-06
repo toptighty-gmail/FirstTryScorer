@@ -15,3 +15,11 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+## Game QR codes
+
+Admins can print a game-specific QR code from that game's board. The QR opens
+the deployed app with the game's six-character join code prefilled. The link
+uses the current site domain, so no Vercel domain setting is required. The
+printed sheet also includes the manual join code and direct link as fallbacks
+if scanning does not work.

@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/supabase_config.dart';
 import 'screens/home_screen.dart';
+import 'utils/game_join_link.dart';
 import 'widgets/responsive_app_frame.dart';
 
 Future<void> main() async {
@@ -33,7 +34,7 @@ class FirstTryScorerApp extends StatelessWidget {
         child: child ?? const SizedBox.shrink(),
       ),
       home: SupabaseConfig.isConfigured
-          ? const HomeScreen()
+          ? HomeScreen(initialJoinCode: gameJoinCodeFromUri(Uri.base))
           : const _NotConfiguredScreen(),
     );
   }
@@ -64,7 +65,7 @@ class _AppVersionFooterState extends State<_AppVersionFooter> {
             builder: (context, snapshot) {
               final label = snapshot.hasData
                   ? 'Version ${snapshot.data!.version}  |  Build ${snapshot.data!.buildNumber}'
-                  : 'Version 1.0.18  |  Build 19';
+                  : 'Version 1.0.19  |  Build 20';
               return Center(
                 child: Text(
                   label,

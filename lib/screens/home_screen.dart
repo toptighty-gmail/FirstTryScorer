@@ -10,7 +10,9 @@ import 'join_game_screen.dart';
 import 'new_game_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final String? initialJoinCode;
+
+  const HomeScreen({super.key, this.initialJoinCode});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -25,6 +27,17 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    final joinCode = widget.initialJoinCode;
+    if (joinCode != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => JoinGameScreen(initialJoinCode: joinCode),
+          ),
+        );
+      });
+    }
     if (AuthService.isInitialized) {
       _authStateSubscription = Supabase.instance.client.auth.onAuthStateChange
           .listen((event) {

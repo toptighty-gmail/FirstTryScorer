@@ -10,6 +10,7 @@ import '../models/game.dart';
 import '../models/pick.dart';
 import '../services/auth_service.dart';
 import '../services/game_service.dart';
+import '../utils/game_join_link.dart';
 
 class _BoardAccess {
   final bool isAdmin;
@@ -309,6 +310,92 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
     await Printing.layoutPdf(onLayout: (format) async => doc.save());
   }
 
+  Future<void> _printJoinQr(Game game) async {
+    try {
+      final joinUri = gameJoinUri(Uri.base, game.joinCode);
+      final doc = pw.Document();
+      doc.addPage(
+        pw.Page(
+          pageFormat: pdf.PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(40),
+          build: (_) => pw.Center(
+            child: pw.Column(
+              mainAxisAlignment: pw.MainAxisAlignment.center,
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              children: [
+                pw.Text(
+                  'FIRST TRY SCORER',
+                  style: pw.TextStyle(
+                    color: pdf.PdfColors.blueGrey600,
+                    fontSize: 12,
+                    letterSpacing: 2,
+                  ),
+                ),
+                pw.SizedBox(height: 16),
+                pw.Text(
+                  '${game.homeTeamName} vs ${game.awayTeamName}',
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(
+                    fontSize: 24,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 8),
+                pw.Text(
+                  DateFormat.yMMMMEEEEd().format(game.matchDate),
+                  style: const pw.TextStyle(fontSize: 14),
+                ),
+                pw.SizedBox(height: 28),
+                pw.BarcodeWidget(
+                  barcode: pw.Barcode.qrCode(),
+                  data: joinUri.toString(),
+                  width: 230,
+                  height: 230,
+                ),
+                pw.SizedBox(height: 20),
+                pw.Text(
+                  'Scan to open this game',
+                  style: pw.TextStyle(
+                    fontSize: 16,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 8),
+                pw.Text(
+                  'If the QR code does not scan, enter this join code in the app:',
+                  textAlign: pw.TextAlign.center,
+                  style: const pw.TextStyle(fontSize: 11),
+                ),
+                pw.SizedBox(height: 8),
+                pw.Text(
+                  game.joinCode,
+                  style: pw.TextStyle(
+                    fontSize: 28,
+                    fontWeight: pw.FontWeight.bold,
+                    letterSpacing: 4,
+                  ),
+                ),
+                pw.SizedBox(height: 14),
+                pw.Text(
+                  'Direct link: ${joinUri.toString()}',
+                  textAlign: pw.TextAlign.center,
+                  style: const pw.TextStyle(fontSize: 9),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      await Printing.layoutPdf(onLayout: (format) async => doc.save());
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not print the game QR code: $error')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Game>(
@@ -358,6 +445,11 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                 title: const Text('Game Board'),
                 actions: access.isAdmin
                     ? [
+                        IconButton(
+                          icon: const Icon(Icons.qr_code_2),
+                          tooltip: 'Print join QR code',
+                          onPressed: () => _printJoinQr(game),
+                        ),
                         IconButton(
                           icon: const Icon(Icons.print),
                           tooltip: 'Print PDF',
