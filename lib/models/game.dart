@@ -8,6 +8,9 @@ class Game {
   final String joinCode;
   final String status;
   final double ticketPrice;
+  final int playersPerTeam;
+
+  int get totalSlots => playersPerTeam * 2;
 
   const Game({
     required this.id,
@@ -19,7 +22,10 @@ class Game {
     required this.joinCode,
     required this.status,
     required this.ticketPrice,
+    this.playersPerTeam = defaultPlayersPerTeam,
   });
+
+  static const defaultPlayersPerTeam = 15;
 
   // Expects a row selected with the home/away team names embedded, e.g.
   // `select('*, home:teams!home_team_id(name), away:teams!away_team_id(name)')`.
@@ -34,6 +40,8 @@ class Game {
       joinCode: map['join_code'] as String,
       status: (map['status'] ?? 'open') as String,
       ticketPrice: ((map['ticket_price'] ?? 0) as num).toDouble(),
+      playersPerTeam:
+          (map['players_per_team'] ?? defaultPlayersPerTeam) as int,
     );
   }
 }

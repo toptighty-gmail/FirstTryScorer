@@ -178,8 +178,30 @@ void main() {
   });
 
   test('Draw availability reports remaining allocations', () {
-    expect(drawAvailabilityMessage(5), 'Draws available: 25 of 30');
-    expect(drawAvailabilityMessage(30), 'Draws available: 0 of 30');
+    expect(drawAvailabilityMessage(5, 30), 'Draws available: 25 of 30');
+    expect(drawAvailabilityMessage(30, 30), 'Draws available: 0 of 30');
+    expect(drawAvailabilityMessage(10, 46), 'Draws available: 36 of 46');
+  });
+
+  test('Game maps players per team and defaults to 15', () {
+    final base = {
+      'id': 'game-id',
+      'match_date': '2026-10-01',
+      'home_team_id': 'home-id',
+      'away_team_id': 'away-id',
+      'home': {'name': 'Home Team'},
+      'away': {'name': 'Away Team'},
+      'join_code': 'ABC123',
+      'status': 'open',
+    };
+
+    final legacy = Game.fromMap(base);
+    expect(legacy.playersPerTeam, 15);
+    expect(legacy.totalSlots, 30);
+
+    final withSubs = Game.fromMap({...base, 'players_per_team': 23});
+    expect(withSubs.playersPerTeam, 23);
+    expect(withSubs.totalSlots, 46);
   });
 
   test('Game QR link uses the current site and opens with the join code', () {

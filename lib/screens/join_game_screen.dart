@@ -255,7 +255,10 @@ class _JoinGameScreenState extends State<JoinGameScreen> {
                           Text(DateFormat.yMMMMd().format(game.matchDate)),
                           const SizedBox(height: 8),
                           Text(
-                            drawAvailabilityMessage(_previewDrawCount ?? 0),
+                            drawAvailabilityMessage(
+                              _previewDrawCount ?? 0,
+                              game.totalSlots,
+                            ),
                             style: Theme.of(context).textTheme.titleSmall,
                           ),
                         ],

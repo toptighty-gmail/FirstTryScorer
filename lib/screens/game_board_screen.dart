@@ -155,6 +155,12 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
         pageFormat: pdf.PdfPageFormat.a4.landscape,
         margin: const pw.EdgeInsets.all(28),
         build: (context) {
+          // Tighter rows so a squad including subs still fits on one page.
+          final rowPadding = pw.EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: game.playersPerTeam > 15 ? 2 : 5,
+          );
+
           pw.Widget teamTable(
             String teamName,
             List<Pick> teamPicks,
@@ -185,7 +191,7 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                       width: 0.5,
                     ),
                     columnWidths: const {0: pw.FixedColumnWidth(42)},
-                    children: List.generate(15, (index) {
+                    children: List.generate(game.playersPerTeam, (index) {
                       final number = index + 1;
                       final pick = _findPick(teamPicks, number, team);
                       final background = number.isEven
@@ -195,10 +201,7 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                         decoration: pw.BoxDecoration(color: background),
                         children: [
                           pw.Padding(
-                            padding: const pw.EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 5,
-                            ),
+                            padding: rowPadding,
                             child: pw.Text(
                               number.toString().padLeft(2, '0'),
                               style: pw.TextStyle(
@@ -207,10 +210,7 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                             ),
                           ),
                           pw.Padding(
-                            padding: const pw.EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 5,
-                            ),
+                            padding: rowPadding,
                             child: pw.Text(
                               pick?.playerName ?? 'Unclaimed',
                               maxLines: 1,
@@ -276,7 +276,7 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                         ),
                         pw.SizedBox(height: 4),
                         pw.Text(
-                          'Status: ${game.status.toUpperCase()}  |  Tickets drawn: ${picks.length}/$totalGameSlots',
+                          'Status: ${game.status.toUpperCase()}  |  Tickets drawn: ${picks.length}/${game.totalSlots}',
                         ),
                       ],
                     ),
@@ -487,10 +487,10 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                   final picks = picksSnapshot.data!;
                   _latestPicks = picks;
                   final drawnCount = picks.length;
-                  final slotsTotal = totalGameSlots;
+                  final slotsTotal = game.totalSlots;
 
                   if (game.status == 'open' &&
-                      drawnCount >= totalGameSlots &&
+                      drawnCount >= slotsTotal &&
                       !_autoCloseStarted) {
                     _autoCloseStarted = true;
                     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -603,6 +603,7 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                             Expanded(
                               child: _TeamColumn(
                                 teamName: game.homeTeamName,
+                                playersPerTeam: game.playersPerTeam,
                                 picksByNumber: homePicks,
                               ),
                             ),
@@ -610,6 +611,7 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                             Expanded(
                               child: _TeamColumn(
                                 teamName: game.awayTeamName,
+                                playersPerTeam: game.playersPerTeam,
                                 picksByNumber: awayPicks,
                               ),
                             ),
@@ -693,9 +695,14 @@ class _GameHeader extends StatelessWidget {
 
 class _TeamColumn extends StatelessWidget {
   final String teamName;
+  final int playersPerTeam;
   final Map<int, Pick> picksByNumber;
 
-  const _TeamColumn({required this.teamName, required this.picksByNumber});
+  const _TeamColumn({
+    required this.teamName,
+    required this.playersPerTeam,
+    required this.picksByNumber,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -708,7 +715,7 @@ class _TeamColumn extends StatelessWidget {
         ),
         Expanded(
           child: ListView.builder(
-            itemCount: 15,
+            itemCount: playersPerTeam,
             itemBuilder: (context, index) {
               final number = index + 1;
               final pick = picksByNumber[number];

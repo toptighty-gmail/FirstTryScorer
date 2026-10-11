@@ -8,14 +8,9 @@ import '../models/team.dart';
 
 const _gameSelect =
     '*, home:teams!home_team_id(name), away:teams!away_team_id(name)';
-const totalGameSlots = 30;
-
-String drawAvailabilityMessage(int allocatedDrawCount) {
-  final available = (totalGameSlots - allocatedDrawCount).clamp(
-    0,
-    totalGameSlots,
-  );
-  return 'Draws available: $available of $totalGameSlots';
+String drawAvailabilityMessage(int allocatedDrawCount, int totalSlots) {
+  final available = (totalSlots - allocatedDrawCount).clamp(0, totalSlots);
+  return 'Draws available: $available of $totalSlots';
 }
 
 String closedDrawMessage(String status) {
@@ -50,6 +45,7 @@ class GameService {
     required Team homeTeam,
     required Team awayTeam,
     required double ticketPrice,
+    required int playersPerTeam,
   }) async {
     for (var attempt = 0; attempt < 5; attempt++) {
       final joinCode = _generateJoinCode();
@@ -61,6 +57,7 @@ class GameService {
               'home_team_id': homeTeam.id,
               'away_team_id': awayTeam.id,
               'ticket_price': ticketPrice,
+              'players_per_team': playersPerTeam,
               'join_code': joinCode,
             })
             .select()
@@ -75,6 +72,7 @@ class GameService {
           joinCode: row['join_code'] as String,
           status: 'open',
           ticketPrice: ticketPrice,
+          playersPerTeam: playersPerTeam,
         );
       } on PostgrestException catch (e) {
         if (e.code == '23505') continue; // join code collision, retry
@@ -126,6 +124,7 @@ class GameService {
     required Team homeTeam,
     required Team awayTeam,
     required double ticketPrice,
+    required int playersPerTeam,
   }) async {
     await _client
         .from('games')
@@ -134,6 +133,8 @@ class GameService {
           'home_team_id': homeTeam.id,
           'away_team_id': awayTeam.id,
           'ticket_price': ticketPrice,
+          if (playersPerTeam != game.playersPerTeam)
+            'players_per_team': playersPerTeam,
         })
         .eq('id', game.id);
   }

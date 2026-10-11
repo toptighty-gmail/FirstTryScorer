@@ -21,20 +21,34 @@ class NewGameScreen extends StatefulWidget {
 class _NewGameScreenState extends State<NewGameScreen> {
   final GameService _gameService = GameService();
   final TextEditingController _ticketPriceController = TextEditingController();
+  final TextEditingController _playersPerTeamController = TextEditingController(
+    text: '${Game.defaultPlayersPerTeam}',
+  );
   DateTime _matchDate = DateTime.now();
   Team? _homeTeam;
   Team? _awayTeam;
   bool _creating = false;
+  bool _playersPerTeamLocked = false;
   String? _error;
 
+  static const _maxPlayersPerTeam = 30;
+
   double? get _ticketPrice => double.tryParse(_ticketPriceController.text);
+
+  int? get _playersPerTeam => int.tryParse(_playersPerTeamController.text);
+
+  bool get _playersPerTeamValid =>
+      _playersPerTeam != null &&
+      _playersPerTeam! >= 1 &&
+      _playersPerTeam! <= _maxPlayersPerTeam;
 
   bool get _canCreate =>
       _homeTeam != null &&
       _awayTeam != null &&
       _homeTeam!.id != _awayTeam!.id &&
       _ticketPrice != null &&
-      _ticketPrice! >= 0;
+      _ticketPrice! >= 0 &&
+      _playersPerTeamValid;
 
   String? get _teamSelectionMessage {
     if (_homeTeam == null || _awayTeam == null) {
@@ -50,12 +64,16 @@ class _NewGameScreenState extends State<NewGameScreen> {
     if (_ticketPrice == null || _ticketPrice! < 0) {
       return 'Enter a valid ticket price of £0 or more.';
     }
+    if (!_playersPerTeamValid) {
+      return 'Enter between 1 and $_maxPlayersPerTeam players per team.';
+    }
     return null;
   }
 
   @override
   void dispose() {
     _ticketPriceController.dispose();
+    _playersPerTeamController.dispose();
     super.dispose();
   }
 
@@ -68,8 +86,23 @@ class _NewGameScreenState extends State<NewGameScreen> {
       _homeTeam = Team(id: game.homeTeamId, name: game.homeTeamName);
       _awayTeam = Team(id: game.awayTeamId, name: game.awayTeamName);
       _ticketPriceController.text = game.ticketPrice.toStringAsFixed(2);
+      _playersPerTeamController.text = '${game.playersPerTeam}';
+      _loadPlayersPerTeamLock(game.id);
     }
     _ensureAdminAccess();
+  }
+
+  // Ticket numbers already drawn must stay within the team size, so the size
+  // is fixed once the first ticket is drawn.
+  Future<void> _loadPlayersPerTeamLock(String gameId) async {
+    try {
+      final drawCount = await _gameService.getDrawCount(gameId);
+      if (!mounted) return;
+      setState(() => _playersPerTeamLocked = drawCount > 0);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _playersPerTeamLocked = true);
+    }
   }
 
   Future<void> _ensureAdminAccess() async {
@@ -133,6 +166,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
           homeTeam: _homeTeam!,
           awayTeam: _awayTeam!,
           ticketPrice: _ticketPrice!,
+          playersPerTeam: _playersPerTeam!,
         );
         if (!mounted) return;
         Navigator.of(context).pushReplacement(
@@ -148,6 +182,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
           homeTeam: _homeTeam!,
           awayTeam: _awayTeam!,
           ticketPrice: _ticketPrice!,
+          playersPerTeam: _playersPerTeam!,
         );
         if (!mounted) return;
         Navigator.of(context).pop(true);
@@ -201,6 +236,24 @@ class _NewGameScreenState extends State<NewGameScreen> {
                           labelText: 'Ticket price',
                           prefixText: '£ ',
                           border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _playersPerTeamController,
+                        enabled: !_playersPerTeamLocked,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(2),
+                        ],
+                        onChanged: (_) => setState(() => _error = null),
+                        decoration: InputDecoration(
+                          labelText: 'Players per team',
+                          helperText: _playersPerTeamLocked
+                              ? 'Cannot change after tickets are drawn.'
+                              : '15 for the starting side, 23 to include subs.',
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                       const SizedBox(height: 16),

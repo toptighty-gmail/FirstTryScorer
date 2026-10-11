@@ -57,17 +57,48 @@ alter table public.games
   add column if not exists ticket_price numeric(8, 2) not null default 0
   check (ticket_price >= 0);
 
+-- Ticket numbers per team: 15 for a starting side, 23 including subs.
+alter table public.games
+  add column if not exists players_per_team int not null default 15
+  check (players_per_team between 1 and 30);
+
 create table if not exists picks (
   id uuid primary key default gen_random_uuid(),
   game_id uuid not null references games(id) on delete cascade,
   player_name text not null,
   team text not null check (team in ('home', 'away')),
-  number int not null check (number between 1 and 15),
+  number int not null check (number >= 1),
   claimed_at timestamptz not null default now(),
   unique (game_id, team, number)
 );
 
 create index if not exists picks_game_id_idx on picks (game_id);
+
+-- The upper limit per game comes from games.players_per_team and is enforced
+-- by draw_slot(), so replace the old fixed 1-15 check.
+alter table public.picks drop constraint if exists picks_number_check;
+alter table public.picks add constraint picks_number_check check (number >= 1);
+
+-- Lock players_per_team once any ticket has been drawn for the game.
+create or replace function guard_players_per_team()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if new.players_per_team <> old.players_per_team and exists (
+    select 1 from public.picks where game_id = old.id
+  ) then
+    raise exception 'Players per team cannot change after tickets are drawn';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists games_guard_players_per_team on games;
+create trigger games_guard_players_per_team
+  before update of players_per_team on games
+  for each row execute function guard_players_per_team();
 
 create or replace function close_game(p_game_id uuid, p_status text default 'closed')
 returns public.games
@@ -101,8 +132,9 @@ begin
 
   if p_status = 'complete' and (
     select count(*) from public.picks where game_id = p_game_id
-  ) < 30 then
-    raise exception 'A game can only be completed when all 30 tickets are drawn';
+  ) < v_game.players_per_team * 2 then
+    raise exception 'A game can only be completed when all % tickets are drawn',
+      v_game.players_per_team * 2;
   end if;
 
   update public.games
@@ -131,8 +163,9 @@ declare
   v_number int;
   v_attempts int := 0;
   v_status text;
+  v_players int;
 begin
-  select status into v_status
+  select status, players_per_team into v_status, v_players
   from public.games
   where id = p_game_id
   for update;
@@ -154,9 +187,9 @@ begin
     select pool.team, pool.number
       into v_team, v_number
     from (
-      select 'home' as team, n as number from generate_series(1, 15) n
+      select 'home' as team, n as number from generate_series(1, v_players) n
       union all
-      select 'away' as team, n as number from generate_series(1, 15) n
+      select 'away' as team, n as number from generate_series(1, v_players) n
     ) pool
     where not exists (
       select 1 from picks p
@@ -175,7 +208,7 @@ begin
       insert into picks (game_id, player_name, team, number)
       values (p_game_id, p_player_name, v_team, v_number);
 
-      if (select count(*) from public.picks where game_id = p_game_id) = 30 then
+      if (select count(*) from public.picks where game_id = p_game_id) >= v_players * 2 then
         update public.games set status = 'complete' where id = p_game_id;
       end if;
 
